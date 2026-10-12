@@ -16,6 +16,15 @@ Quest and PICO use different OpenXR vendor features and controller profiles, whi
 
 The project is committed with Meta Quest selected.
 
+## XR Origin
+
+The scene rig is `Assets/XR/Prefabs/XR Origin (Hands Only).prefab`. It is built from the XR Interaction Toolkit hands demo rig with controllers, gaze, teleport and all locomotion removed, so interaction is hand tracking only (poke and pinch) and the player moves only physically (floor tracking origin, no character controller).
+
+- **VR Map > XR Origin > Rebuild Hands-Only Prefab** regenerates the prefab from the XRI sample.
+- **VR Map > XR Origin > Use Hands-Only Rig In Open Scene** swaps the open scene's XR Origin for it.
+
+Both XR targets enable OpenXR hand tracking and the hand interaction profile. Quest also enables Meta hand tracking aim; PICO turns on hand tracking in its project setting.
+
 ## PICO SDK patch
 
 The PICO OpenXR SDK 1.4.0 doesn't compile on Unity 6.5+ because two Enterprise samples call `Object.GetInstanceID()`, which is now an error. The embedded copy replaces those calls with `CompositionLayerManager.TryGetLayerId` in:
