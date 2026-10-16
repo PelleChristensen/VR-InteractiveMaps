@@ -1,10 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TMPro;
 using Unity.XR.CoreUtils;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Filtering;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 namespace VRInteractiveMaps.Editor
 {
@@ -17,6 +20,7 @@ namespace VRInteractiveMaps.Editor
     {
         const string k_SourcePrefab = "Assets/Samples/XR Interaction Toolkit/3.5.1/Hands Interaction Demo/Prefabs/XR Origin Hands (XR Rig).prefab";
         public const string PrefabPath = "Assets/XR/Prefabs/XR Origin (Hands Only).prefab";
+        const string k_ExitMaterialPath = "Assets/XR/Materials/Exit Button.mat";
 
         // Children of Camera Offset / XR Origin that only serve controllers, gaze or locomotion.
         static readonly string[] k_RemovedChildren =
@@ -117,7 +121,79 @@ namespace VRInteractiveMaps.Editor
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
 
+            AddPalmExitButton(rig);
             ReportMissingReferences(rig);
+        }
+
+        [MenuItem("VR Map/XR Origin/Add Palm Exit Button To Prefab", priority = 22)]
+        public static void AddPalmExitButtonToPrefab()
+        {
+            var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            try
+            {
+                AddPalmExitButton(root);
+                PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+                Debug.Log($"[HandsOnlyRigBuilder] Added palm exit button to {PrefabPath}\n{Describe(root.transform)}");
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        // A red "Exit" poke button that PalmExitButton shows above the left palm.
+        static void AddPalmExitButton(GameObject rig)
+        {
+            var existing = rig.GetComponentInChildren<PalmExitButton>(true);
+            if (existing != null)
+                Object.DestroyImmediate(existing.gameObject);
+
+            var menu = new GameObject("Palm Exit Menu");
+            menu.transform.SetParent(rig.transform, false);
+            var palmExit = menu.AddComponent<PalmExitButton>();
+
+            var button = new GameObject("Exit Button");
+            button.transform.SetParent(menu.transform, false);
+            var collider = button.AddComponent<BoxCollider>();
+            collider.size = new Vector3(0.07f, 0.035f, 0.02f);
+            var interactable = button.AddComponent<XRSimpleInteractable>();
+            interactable.colliders.Add(collider);
+            button.AddComponent<XRPokeFilter>();
+
+            var plate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            plate.name = "Plate";
+            Object.DestroyImmediate(plate.GetComponent<Collider>());
+            plate.transform.SetParent(button.transform, false);
+            plate.transform.localScale = new Vector3(0.07f, 0.035f, 0.008f);
+            plate.GetComponent<MeshRenderer>().sharedMaterial = GetExitMaterial();
+
+            var label = new GameObject("Label");
+            label.transform.SetParent(button.transform, false);
+            label.transform.localPosition = new Vector3(0f, 0f, -0.0045f);
+            var text = label.AddComponent<TextMeshPro>();
+            text.text = "Exit";
+            text.fontSize = 0.18f;
+            text.alignment = TextAlignmentOptions.Center;
+            text.color = Color.white;
+            text.rectTransform.sizeDelta = new Vector2(0.07f, 0.035f);
+
+            var so = new SerializedObject(palmExit);
+            so.FindProperty("m_Button").objectReferenceValue = interactable;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            button.SetActive(false);
+        }
+
+        static Material GetExitMaterial()
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(k_ExitMaterialPath);
+            if (material != null)
+                return material;
+
+            material = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+            material.SetColor("_BaseColor", new Color(0.8f, 0.15f, 0.15f));
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(k_ExitMaterialPath));
+            AssetDatabase.CreateAsset(material, k_ExitMaterialPath);
+            return material;
         }
 
         static void RemoveComponent(GameObject go, string typeName)
