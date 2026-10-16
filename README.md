@@ -23,6 +23,8 @@ The scene rig is `Assets/XR/Prefabs/XR Origin (Hands Only).prefab`. It is built 
 - **VR Map > XR Origin > Rebuild Hands-Only Prefab** regenerates the prefab from the XRI sample.
 - **VR Map > XR Origin > Use Hands-Only Rig In Open Scene** swaps the open scene's XR Origin for it.
 
+The rig includes a **palm exit button**: turn your left palm toward your face and a red Exit button appears above it; poke it with your right index finger to quit the app. It's there because the PICO system gesture doesn't reliably leave the app while hand tracking is active. The button is built by the rig builder (`PalmExitButton` in `Assets/XR/Scripts`).
+
 Both XR targets enable OpenXR hand tracking and the hand interaction profile. Quest also enables Meta hand tracking aim; PICO turns on hand tracking in its project setting.
 
 ## PICO SDK patch
