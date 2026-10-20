@@ -197,7 +197,12 @@ namespace DenmarkMap
                 r.timeout = 20;
                 yield return r.SendWebRequest();
                 if (r.result == UnityWebRequest.Result.Success) onText(r.downloadHandler.text);
-                else { status = "error: " + r.error + " (" + url.Split('?')[0] + ")"; onText(null); }
+                else
+                {
+                    status = "error: " + r.error + " (" + url.Split('?')[0] + ")";
+                    Debug.LogWarning($"[WindPark] {r.error} (HTTP {r.responseCode}) {url.Split('?')[0]}");
+                    onText(null);
+                }
             }
         }
 
