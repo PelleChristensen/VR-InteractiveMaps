@@ -55,6 +55,8 @@ namespace DenmarkMap
         [Header("Data")]
         [Tooltip("How often to check for newly published data in Live mode (the source updates about once a day).")]
         public float liveRefreshMinutes = 30f;
+        [Tooltip("How soon to try again after a failed request (e.g. before the Wi-Fi login page has been accepted).")]
+        public float retryAfterErrorSeconds = 15f;
 
         [Header("Markers")]
         [Tooltip("Vertical scale of the marker for the largest consumer (prefab height x this).")]
@@ -100,6 +102,7 @@ namespace DenmarkMap
             {
                 bool live = _timeline == null || _timeline.IsLive;
                 yield return live ? LoadLatest() : LoadHour(_timeline.SelectedDK);
+                if (status.StartsWith("error")) { yield return new WaitForSeconds(retryAfterErrorSeconds); continue; }
                 if (!live) yield break;
                 yield return new WaitForSeconds(liveRefreshMinutes * 60f);
             }
@@ -178,13 +181,15 @@ namespace DenmarkMap
         {
             for (int attempt = 0; attempt < 3; attempt++)
             {
-                using (var r = UnityWebRequest.Get(url))
+                using (var r = OpenDataCertificateHandler.Get(url))
                 {
                     r.timeout = 30;
                     yield return r.SendWebRequest();
                     if (r.result == UnityWebRequest.Result.Success) { done(r.downloadHandler.text); yield break; }
                     if (r.responseCode == 429) { status = "rate limited – retrying in 2 min"; yield return new WaitForSeconds(125f); continue; }
-                    status = "error: " + r.error; done(null); yield break;
+                    status = "error: " + r.error;
+                    Debug.LogWarning($"[MunicipalityConsumption] {r.error} (HTTP {r.responseCode}) {url.Split('?')[0]}");
+                    done(null); yield break;
                 }
             }
             done(null);
