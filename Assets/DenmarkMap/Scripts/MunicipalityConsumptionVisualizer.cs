@@ -181,7 +181,7 @@ namespace DenmarkMap
         {
             for (int attempt = 0; attempt < 3; attempt++)
             {
-                using (var r = UnityWebRequest.Get(url))
+                using (var r = OpenDataCertificateHandler.Get(url))
                 {
                     r.timeout = 30;
                     yield return r.SendWebRequest();

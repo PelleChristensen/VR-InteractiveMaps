@@ -192,7 +192,7 @@ namespace DenmarkMap
 
         IEnumerator Get(string url, Action<string> onText)
         {
-            using (var r = UnityWebRequest.Get(url))
+            using (var r = OpenDataCertificateHandler.Get(url))
             {
                 r.timeout = 20;
                 yield return r.SendWebRequest();
